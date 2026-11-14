@@ -1412,9 +1412,16 @@ function activate(ctx, config) {
     const projections = scope && scope.sessionProjections;
     if (!projections || typeof projections.register !== "function") return;
     armorRegistration.hasService = true;
+    // 全局实例与预设实例都会走这里：同一进程只允许注册一次（key 是全局唯一的）。
+    if (globalThis.__dshArmorGen5Projection === true) {
+      armorRegistered = true;
+      armorRegistration.phase = "shared";
+      return;
+    }
     try {
       const handle = projections.register(armorProjectionDefinition);
       armorRegistered = true;
+      globalThis.__dshArmorGen5Projection = true;
       armorRegistration.phase = "registered";
       if (handle && typeof handle.then === "function") {
         handle.catch((error) => {
